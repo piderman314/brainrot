@@ -12,6 +12,7 @@ fn parse_internal(code: Vec<u8>) -> Result<Vec<Command>, BFError> {
     for symbol in code {
         match symbol as char {
             '+' => commands.push(Command::Increment),
+            '.' => commands.push(Command::Output),
             _ => continue,
         }
     }
@@ -26,12 +27,13 @@ mod test {
 
     #[test]
     fn parse_unknown_commands() {
-        let result = parse_internal(b"+qwerty".to_vec());
+        let result = parse_internal(b"+qwerty.".to_vec());
         assert!(result.is_ok());
 
         let commands = result.unwrap();
-        assert_eq!(1, commands.len());
+        assert_eq!(2, commands.len());
         assert!(matches!(commands[0], Command::Increment));
+        assert!(matches!(commands[1], Command::Output));
     }
 
     #[test]
@@ -43,5 +45,16 @@ mod test {
         assert_eq!(2, commands.len());
         assert!(matches!(commands[0], Command::Increment));
         assert!(matches!(commands[1], Command::Increment));
+    }
+
+    #[test]
+    fn parse_period() {
+        let result = parse_internal(b"..".to_vec());
+        assert!(result.is_ok());
+
+        let commands = result.unwrap();
+        assert_eq!(2, commands.len());
+        assert!(matches!(commands[0], Command::Output));
+        assert!(matches!(commands[1], Command::Output));
     }
 }

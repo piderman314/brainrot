@@ -11,6 +11,8 @@ use std::io::{Read, Write};
 #[derive(Debug, Clone)]
 pub struct BFError;
 
-pub fn run<R: Read, W:Write>(code: Vec<u8>, input: R, output: W) {
-    let program = parser::parse(code);
+pub fn run<R: Read, W:Write>(code: Vec<u8>, input: R, output: &mut W) {
+    let mut program = parser::parse(code).unwrap();
+
+    program.run(input, output);
 }
