@@ -9,29 +9,58 @@ pub fn parse(code: Vec<u8>) -> Result<Program, BFError> {
 fn parse_internal(code: Vec<u8>) -> Result<Vec<Command>, BFError> {
     let mut commands = Vec::new();
 
-    for symbol in code {
-        match symbol as char {
-            '+' => commands.push(Command::Increment),
-            '-' => commands.push(Command::Decrement),
-            ',' => commands.push(Command::Input),
-            '.' => commands.push(Command::Output),
-            '<' => commands.push(Command::Left),
-            '>' => commands.push(Command::Right),
-            _ => continue,
+    let mut iter = code.into_iter();
+
+    loop {
+        let symbol = iter.next();
+
+        if symbol.is_none() {
+            break;
+        }
+
+        if let Some(command) = map_common_chars(symbol) {
+            commands.push(command);
+            continue;
+        }
+
+        if symbol.unwrap() as char == ']' {
+            return Err(BFError {
+                message: String::from("Unexpected ]"),
+            });
         }
     }
 
     Ok(commands)
 }
 
+fn map_common_chars(symbol: Option<u8>) -> Option<Command> {
+    if let Some(symbol) = symbol {
+        match symbol as char {
+            '+' => Some(Command::Increment),
+            '-' => Some(Command::Decrement),
+            ',' => Some(Command::Input),
+            '.' => Some(Command::Output),
+            '<' => Some(Command::Left),
+            '>' => Some(Command::Right),
+            _ => None,
+        }
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use program::Command;
+    use std::error::Error;
 
     #[test]
     fn parse_unknown_commands() {
-        parse_code(b"+qwerty.".to_vec(), vec![Command::Increment, Command::Output]);
+        parse_code(
+            b"+qwerty.".to_vec(),
+            vec![Command::Increment, Command::Output],
+        );
     }
 
     #[test]
@@ -43,7 +72,6 @@ mod test {
     fn parse_minus() {
         parse_code(b"--".to_vec(), vec![Command::Decrement, Command::Decrement]);
     }
-
 
     #[test]
     fn parse_comma() {
@@ -61,5 +89,14 @@ mod test {
 
         let commands = result.unwrap();
         assert_eq!(commands, output);
+    }
+
+    #[test]
+    fn parse_unexpected_end_loop() {
+        let result = parse_internal(b"+++]".to_vec());
+        assert!(result.is_err());
+
+        let error = result.err().unwrap();
+        assert_eq!("Unexpected ]", error.description());
     }
 }
