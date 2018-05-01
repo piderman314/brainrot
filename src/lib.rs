@@ -1,4 +1,5 @@
 #[macro_use]
+#[cfg(test)]
 extern crate matches;
 
 mod parser;
