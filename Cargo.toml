@@ -4,4 +4,3 @@ version = "0.1.0"
 authors = ["Mark Arts <piderman+github@gmail.com>"]
 
 [dependencies]
-matches = "0.1.6"

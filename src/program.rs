@@ -1,10 +1,13 @@
 use std::io::{Read, Write};
 
+#[derive(Debug, PartialEq)] // to be able to test somewhat sensibly
 pub enum Command {
     Increment,
     Decrement,
     Input,
     Output,
+    Left,
+    Right,
 }
 
 pub struct Program {
@@ -30,12 +33,20 @@ impl Program {
                     array.set_value(value - 1);
                 }
                 &Command::Output => {
-                    output.write(&[array.get_value(); 1]).expect("Failed to write");
+                    output
+                        .write(&[array.get_value(); 1])
+                        .expect("Failed to write");
                 }
                 &Command::Input => {
                     let mut i = [0; 1];
                     input.read(&mut i).unwrap();
                     array.set_value(i[0]);
+                }
+                &Command::Left => {
+                    array.left();
+                }
+                &Command::Right => {
+                    array.right();
                 }
             }
         }
@@ -61,7 +72,7 @@ impl Array {
     }
 
     fn right(&mut self) {
-        if self.data_pointer == self.data.len() {
+        if self.data_pointer == (self.data.len() - 1) {
             self.data.push(0);
         }
 
@@ -124,5 +135,32 @@ mod test {
 
         assert_eq!(1, output.len());
         assert_eq!('q', output[0] as char);
+    }
+
+    #[test]
+    fn test_left_and_right() {
+        let commands = vec![
+            Command::Right,
+            Command::Increment,
+            Command::Right,
+            Command::Increment,
+            Command::Output,
+            Command::Left,
+            Command::Increment,
+            Command::Output,
+            Command::Left,
+            Command::Left,
+            Command::Output,
+        ];
+        let mut program = Program::new(commands);
+
+        let mut input = "q".as_bytes();
+        let mut output = Vec::new();
+        program.run(&mut input, &mut output);
+
+        assert_eq!(3, output.len());
+        assert_eq!(1, output[0]);
+        assert_eq!(2, output[1]);
+        assert_eq!(0, output[2]);
     }
 }
