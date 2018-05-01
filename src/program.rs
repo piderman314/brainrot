@@ -1,6 +1,11 @@
-use command::Command;
-
 use std::io::{Read, Write};
+
+pub enum Command {
+    Increment,
+    Decrement,
+    Input,
+    Output,
+}
 
 pub struct Program {
     commands: Vec<Command>,
@@ -11,7 +16,7 @@ impl Program {
         Program { commands }
     }
 
-    pub fn run<R: Read, W: Write>(&mut self, input: R, output: &mut W) {
+    pub fn run<R: Read, W: Write>(&mut self, input: &mut R, output: &mut W) {
         let mut array = Array::new();
 
         for command in &self.commands {
@@ -20,8 +25,17 @@ impl Program {
                     let value = array.get_value();
                     array.set_value(value + 1);
                 }
+                &Command::Decrement => {
+                    let value = array.get_value();
+                    array.set_value(value - 1);
+                }
                 &Command::Output => {
                     output.write(&[array.get_value(); 1]).expect("Failed to write");
+                }
+                &Command::Input => {
+                    let mut i = [0; 1];
+                    input.read(&mut i).unwrap();
+                    array.set_value(i[0]);
                 }
             }
         }
@@ -78,10 +92,37 @@ mod test {
         let commands = vec![Command::Increment, Command::Increment, Command::Output];
         let mut program = Program::new(commands);
 
+        let mut input = "".as_bytes();
         let mut output = Vec::new();
-        program.run("".as_bytes(), &mut output);
+        program.run(&mut input, &mut output);
 
         assert_eq!(1, output.len());
         assert_eq!(2, output[0]);
+    }
+
+    #[test]
+    fn test_decrement() {
+        let commands = vec![Command::Increment, Command::Decrement, Command::Output];
+        let mut program = Program::new(commands);
+
+        let mut input = "".as_bytes();
+        let mut output = Vec::new();
+        program.run(&mut input, &mut output);
+
+        assert_eq!(1, output.len());
+        assert_eq!(0, output[0]);
+    }
+
+    #[test]
+    fn test_input() {
+        let commands = vec![Command::Input, Command::Output];
+        let mut program = Program::new(commands);
+
+        let mut input = "q".as_bytes();
+        let mut output = Vec::new();
+        program.run(&mut input, &mut output);
+
+        assert_eq!(1, output.len());
+        assert_eq!('q', output[0] as char);
     }
 }

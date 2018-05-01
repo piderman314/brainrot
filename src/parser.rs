@@ -1,5 +1,5 @@
 use super::BFError;
-use command::Command;
+use program::Command;
 use program::Program;
 
 pub fn parse(code: Vec<u8>) -> Result<Program, BFError> {
@@ -12,6 +12,8 @@ fn parse_internal(code: Vec<u8>) -> Result<Vec<Command>, BFError> {
     for symbol in code {
         match symbol as char {
             '+' => commands.push(Command::Increment),
+            '-' => commands.push(Command::Decrement),
+            ',' => commands.push(Command::Input),
             '.' => commands.push(Command::Output),
             _ => continue,
         }
@@ -23,7 +25,7 @@ fn parse_internal(code: Vec<u8>) -> Result<Vec<Command>, BFError> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use command::Command;
+    use program::Command;
 
     #[test]
     fn parse_unknown_commands() {
@@ -45,6 +47,29 @@ mod test {
         assert_eq!(2, commands.len());
         assert!(matches!(commands[0], Command::Increment));
         assert!(matches!(commands[1], Command::Increment));
+    }
+
+    #[test]
+    fn parse_minus() {
+        let result = parse_internal(b"--".to_vec());
+        assert!(result.is_ok());
+
+        let commands = result.unwrap();
+        assert_eq!(2, commands.len());
+        assert!(matches!(commands[0], Command::Decrement));
+        assert!(matches!(commands[1], Command::Decrement));
+    }
+
+
+    #[test]
+    fn parse_comma() {
+        let result = parse_internal(b",,".to_vec());
+        assert!(result.is_ok());
+
+        let commands = result.unwrap();
+        assert_eq!(2, commands.len());
+        assert!(matches!(commands[0], Command::Input));
+        assert!(matches!(commands[1], Command::Input));
     }
 
     #[test]
