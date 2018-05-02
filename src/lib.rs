@@ -5,10 +5,12 @@ use std::io::{Read, Write};
 use std::error::Error;
 use std::fmt;
 
-pub fn run<R: Read, W:Write>(code: Vec<u8>, input: &mut R, output: &mut W) {
-    let mut program = parser::parse(code).unwrap();
+pub fn run<R: Read, W:Write>(code: Vec<u8>, input: &mut R, output: &mut W) -> Result<(), BFError> {
+    let mut program = parser::parse(code)?;
 
     program.run(input, output);
+
+    Ok(())
 }
 
 #[derive(Debug, Clone)]

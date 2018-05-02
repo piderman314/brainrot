@@ -1,6 +1,7 @@
 extern crate brainrot;
 
 use std::env;
+use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 
@@ -31,5 +32,11 @@ fn main() {
         }
     }
 
-    brainrot::run(code, &mut std::io::stdin(), &mut std::io::stdout());
+    match brainrot::run(code, &mut std::io::stdin(), &mut std::io::stdout()) {
+        Ok(_) => (),
+        Err(bferror) => {
+            println!("Invalid code: {}", bferror.description());
+            return;
+        }
+    }
 }
