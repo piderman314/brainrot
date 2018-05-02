@@ -21,14 +21,14 @@ impl Program {
         Program { commands }
     }
 
-    pub fn run<R: Read, W: Write>(&mut self, input: &mut R, output: &mut W) {
+    pub fn run<R: Read, W: Write>(&self, input: &mut R, output: &mut W) {
         let mut array = Array::new();
 
         self.run_internal(&mut array, input, output);
     }
 
-    fn run_internal<R: Read, W: Write>(&mut self, array: &mut Array, input: &mut R, output: &mut W) {
-        for command in &mut self.commands {
+    fn run_internal<R: Read, W: Write>(&self, array: &mut Array, input: &mut R, output: &mut W) {
+        for command in &self.commands {
             match *command {
                 Command::Increment => {
                     let value = array.get_value();
@@ -54,14 +54,14 @@ impl Program {
                 Command::Right => {
                     array.right();
                 }
-                Command::Loop(ref mut program) => {
+                Command::Loop(ref program) => {
                    program.loop_internal(array, input, output);
                 }
             }
         }
     }
 
-    fn loop_internal<R: Read, W: Write>(&mut self, array: &mut Array, input: &mut R, output: &mut W) {
+    fn loop_internal<R: Read, W: Write>(&self, array: &mut Array, input: &mut R, output: &mut W) {
          if array.get_value() == 0 {
             return;
         }
@@ -123,7 +123,7 @@ mod test {
     #[test]
     fn test_increment() {
         let commands = vec![Command::Increment, Command::Increment, Command::Output];
-        let mut program = Program::new(commands);
+        let program = Program::new(commands);
 
         let mut input = "".as_bytes();
         let mut output = Vec::new();
@@ -136,7 +136,7 @@ mod test {
     #[test]
     fn test_decrement() {
         let commands = vec![Command::Increment, Command::Decrement, Command::Output];
-        let mut program = Program::new(commands);
+        let program = Program::new(commands);
 
         let mut input = "".as_bytes();
         let mut output = Vec::new();
@@ -149,7 +149,7 @@ mod test {
     #[test]
     fn test_input() {
         let commands = vec![Command::Input, Command::Output];
-        let mut program = Program::new(commands);
+        let program = Program::new(commands);
 
         let mut input = "q".as_bytes();
         let mut output = Vec::new();
@@ -174,7 +174,7 @@ mod test {
             Command::Left,
             Command::Output,
         ];
-        let mut program = Program::new(commands);
+        let program = Program::new(commands);
 
         let mut input = "q".as_bytes();
         let mut output = Vec::new();
@@ -192,7 +192,7 @@ mod test {
         let loopp = Command::Loop(Program::new(loop_commands));
 
         let commands = vec![loopp, Command::Output];
-        let mut program = Program::new(commands);
+        let program = Program::new(commands);
 
         let mut input = "".as_bytes();
         let mut output = Vec::new();
@@ -209,7 +209,7 @@ mod test {
 
         // ++>++<[->+<]>.
         let commands = vec![Command::Increment, Command::Increment, Command::Right, Command::Increment, Command::Increment, Command::Left, loopp, Command::Right, Command::Output];
-        let mut program = Program::new(commands);
+        let program = Program::new(commands);
 
         let mut input = "".as_bytes();
         let mut output = Vec::new();

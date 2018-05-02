@@ -6,7 +6,7 @@ use std::error::Error;
 use std::fmt;
 
 pub fn run<R: Read, W:Write>(code: Vec<u8>, input: &mut R, output: &mut W) -> Result<(), BFError> {
-    let mut program = parser::parse(code)?;
+    let program = parser::parse(code)?;
 
     program.run(input, output);
 
