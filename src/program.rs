@@ -8,8 +8,10 @@ pub enum Command {
     Output,
     Left,
     Right,
+    Loop(Program),
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Program {
     commands: Vec<Command>,
 }
@@ -22,32 +24,53 @@ impl Program {
     pub fn run<R: Read, W: Write>(&mut self, input: &mut R, output: &mut W) {
         let mut array = Array::new();
 
-        for command in &self.commands {
-            match command {
-                &Command::Increment => {
+        self.run_internal(&mut array, input, output);
+    }
+
+    fn run_internal<R: Read, W: Write>(&mut self, array: &mut Array, input: &mut R, output: &mut W) {
+        for command in &mut self.commands {
+            match *command {
+                Command::Increment => {
                     let value = array.get_value();
                     array.set_value(value + 1);
                 }
-                &Command::Decrement => {
+                Command::Decrement => {
                     let value = array.get_value();
                     array.set_value(value - 1);
                 }
-                &Command::Output => {
+                Command::Output => {
                     output
                         .write(&[array.get_value(); 1])
                         .expect("Failed to write");
                 }
-                &Command::Input => {
+                Command::Input => {
                     let mut i = [0; 1];
                     input.read(&mut i).unwrap();
                     array.set_value(i[0]);
                 }
-                &Command::Left => {
+                Command::Left => {
                     array.left();
                 }
-                &Command::Right => {
+                Command::Right => {
                     array.right();
                 }
+                Command::Loop(ref mut program) => {
+                   program.loop_internal(array, input, output);
+                }
+            }
+        }
+    }
+
+    fn loop_internal<R: Read, W: Write>(&mut self, array: &mut Array, input: &mut R, output: &mut W) {
+         if array.get_value() == 0 {
+            return;
+        }
+
+        loop {
+            self.run_internal(array, input, output);
+
+            if array.get_value() == 0 {
+                break;
             }
         }
     }
@@ -65,7 +88,6 @@ impl Array {
             data_pointer: 0,
         };
 
-        // set element 0 to 0
         array.data.push(0);
 
         array
@@ -162,5 +184,38 @@ mod test {
         assert_eq!(1, output[0]);
         assert_eq!(2, output[1]);
         assert_eq!(0, output[2]);
+    }
+
+    #[test]
+    fn test_skip_loop() {
+        let loop_commands = vec![Command::Increment];
+        let loopp = Command::Loop(Program::new(loop_commands));
+
+        let commands = vec![loopp, Command::Output];
+        let mut program = Program::new(commands);
+
+        let mut input = "".as_bytes();
+        let mut output = Vec::new();
+        program.run(&mut input, &mut output);
+
+        assert_eq!(1, output.len());
+        assert_eq!(0, output[0]);
+    }
+
+    #[test]
+    fn test_loop() {
+        let loop_commands = vec![Command::Decrement, Command::Right, Command::Increment, Command::Left];
+        let loopp = Command::Loop(Program::new(loop_commands));
+
+        // ++>++<[->+<]>.
+        let commands = vec![Command::Increment, Command::Increment, Command::Right, Command::Increment, Command::Increment, Command::Left, loopp, Command::Right, Command::Output];
+        let mut program = Program::new(commands);
+
+        let mut input = "".as_bytes();
+        let mut output = Vec::new();
+        program.run(&mut input, &mut output);
+
+        assert_eq!(1, output.len());
+        assert_eq!(4, output[0]);
     }
 }
